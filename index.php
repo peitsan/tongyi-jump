@@ -4,57 +4,91 @@ const MAX_QUERY_LENGTH = 500;
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
-$q = $_GET['q'] ?? '';
-$q = mb_substr($q, 0, MAX_QUERY_LENGTH, 'UTF-8');
+$q = $_GET['q'] ?? $_GET['url'] ?? $_GET['intent'] ?? $_GET['target'] ?? '';
+$q = mb_substr(trim((string) $q), 0, MAX_QUERY_LENGTH, 'UTF-8');
 $encoded = rawurlencode($q);
-$deepLinkPath = 'page/chat?tab=mainChat&inputText=' . $encoded;
-
-$dest = 'tongyi://' . $deepLinkPath;
-$intent = 'intent://' . $deepLinkPath . '#Intent;scheme=tongyi;end';
-$fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
+$intent = $q === '' ? '' : 'intent://page/chat?tab=mainChat&inputText=' . $encoded . '#Intent;scheme=tongyi;end';
+$fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peitsan.github.io/tongyi-jump/?q=' . $encoded;
 ?>
 <!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>正在打开通义千问...</title>
+  <title>正在打开千问...</title>
   <style>
-    body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
-    .box { text-align: center; padding: 32px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: min(90vw, 420px); }
+    :root { color-scheme: light; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; min-height: 100vh; background: #f5f5f5; }
+    .center { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; }
+    .box { text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 92vw; width: 420px; box-sizing: border-box; }
     .loader { width: 40px; height: 40px; border: 3px solid #eee; border-top: 3px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-    .hint { color: #666; margin: 0 0 16px; }
-    .btn { display: inline-block; padding: 10px 14px; border-radius: 10px; background: #1677ff; color: #fff; text-decoration: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    p { color: #666; margin: 0; line-height: 1.6; }
+    .actions { margin-top: 16px; display: none; }
+    .link-btn { display: inline-block; padding: 10px 14px; border-radius: 10px; background: #1677ff; color: #fff; text-decoration: none; word-break: break-all; }
+    .mask { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; background: rgba(0, 0, 0, 0.68); z-index: 10; }
+    .mask-panel { width: min(100%, 420px); background: #fff; border-radius: 20px; padding: 24px; box-sizing: border-box; text-align: left; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+    .mask-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #eef4ff; color: #1677ff; font-size: 12px; margin-bottom: 12px; }
+    .mask h1 { font-size: 20px; margin: 0 0 10px; }
+    .mask p { color: #444; margin: 0 0 14px; }
+    .mask ol { margin: 0 0 18px 20px; color: #444; line-height: 1.8; padding: 0; }
+    .mask .link-btn { width: 100%; text-align: center; box-sizing: border-box; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <div class="loader"></div>
-    <p class="hint"><?php echo $isWechat ? '检测到微信环境，请点击下方按钮打开系统浏览器...' : '正在打开通义千问...'; ?></p>
-    <?php if ($isWechat): ?>
-      <a class="btn" href="<?php echo htmlspecialchars($intent, ENT_QUOTES, 'UTF-8'); ?>">在系统浏览器中打开</a>
-    <?php endif; ?>
+  <div class="mask" id="wechat-mask" aria-hidden="true">
+    <div class="mask-panel">
+      <div class="mask-badge">微信内打开提示</div>
+      <h1>请从外部浏览器打开</h1>
+      <p>请点击右上角“···”，选择“在浏览器中打开”，之后会自动跳转并填充买票 prompt。</p>
+      <ol>
+        <li>点击右上角“···”</li>
+        <li>选择“在浏览器中打开”</li>
+        <li>返回后将自动唤起千问 App</li>
+      </ol>
+      <a class="link-btn" id="open-link" href="#" target="_blank" rel="noopener noreferrer">在系统浏览器中打开</a>
+    </div>
+  </div>
+  <div class="center">
+    <div class="box" id="loading-box">
+      <div class="loader"></div>
+      <p id="status-text"><?php echo $q !== '' ? '正在打开千问...' : '未识别到可直接跳转的买票内容，请检查链接参数。'; ?></p>
+      <div class="actions" id="actions">
+        <a class="link-btn" id="fallback-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="在新标签页打开还原后的链接">打开还原后的链接</a>
+      </div>
+    </div>
   </div>
   <script>
     const isWechat = <?php echo $isWechat ? 'true' : 'false'; ?>;
-    const dest = <?php echo json_encode($dest, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    const intent = <?php echo json_encode($intent, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const intentUrl = <?php echo json_encode($intent, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const fallback = <?php echo json_encode($fallback, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    if (!isWechat) {
-      const FALLBACK_TIMEOUT_MS = 2000;
-      const fallbackTimer = setTimeout(() => {
-        window.location.href = fallback;
-      }, FALLBACK_TIMEOUT_MS);
+    const statusText = document.getElementById('status-text');
+    const actions = document.getElementById('actions');
+    const fallbackLink = document.getElementById('fallback-link');
+    const loadingBox = document.getElementById('loading-box');
+    const wechatMask = document.getElementById('wechat-mask');
+    const openLink = document.getElementById('open-link');
 
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          clearTimeout(fallbackTimer);
-        }
-      });
-
-      window.location.href = dest;
+    if (isWechat) {
+      wechatMask.style.display = 'flex';
+      loadingBox.style.filter = 'blur(0.5px)';
+      loadingBox.setAttribute('aria-hidden', 'true');
+      openLink.href = intentUrl || fallback;
+      openLink.textContent = intentUrl ? '在系统浏览器中打开' : '返回主页';
+      statusText.textContent = intentUrl
+        ? '检测到微信环境，请通过右上角“···”打开系统浏览器。'
+        : '未识别到可填充的买票内容，请先返回上一页重新打开。';
+      actions.style.display = 'block';
+    } else if (intentUrl) {
+      window.location.replace(intentUrl);
+    } else {
+      fallbackLink.href = fallback;
+      fallbackLink.title = fallback;
+      actions.style.display = 'block';
     }
+
+    fallbackLink.href = intentUrl || fallback;
+    fallbackLink.title = intentUrl || fallback;
   </script>
 </body>
 </html>
