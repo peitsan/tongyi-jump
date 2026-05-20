@@ -3,7 +3,7 @@ const MAX_QUERY_LENGTH = 500;
 
 function sanitize_prompt(string $value): string
 {
-    $value = preg_replace('/[\x00-\x1F\x7F]/u', '', $value) ?? '';
+    $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value) ?? '';
     $value = trim($value);
     return mb_substr($value, 0, MAX_QUERY_LENGTH, 'UTF-8');
 }
