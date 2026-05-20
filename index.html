@@ -24,10 +24,11 @@
     const MAX_DECODE_ITERATIONS = 3;
     const INTENT_SCHEME_PATTERN = /^intent:\/\//i;
     const INTENT_PREFIX_PATTERN = /^intent:/i;
+    const HTTPS_SCHEME_PATTERN = /^https$/i;
 
     const decodeSafely = (value) => {
       try { return decodeURIComponent(value); } catch {
-        console.warn('Redirect parameter contains malformed encoding, fallback to raw value.');
+        console.warn('Redirect parameter contains malformed encoding, falling back to raw value.');
         return value;
       }
     };
@@ -60,7 +61,7 @@
             break;
           }
         }
-        if (!/^https$/i.test(scheme)) {
+        if (!HTTPS_SCHEME_PATTERN.test(scheme)) {
           console.warn(`Unsupported scheme "${scheme}" in intent link, force to https.`);
           scheme = 'https';
         }
@@ -75,7 +76,9 @@
         if (url.protocol !== 'https:') return null;
         const host = url.hostname.toLowerCase();
         if (host === 'tongyi.com' || host.endsWith('.tongyi.com')) return url.toString();
-      } catch {}
+      } catch (error) {
+        console.warn('Invalid redirect URL after intent conversion, using fallback.', error);
+      }
       return null;
     };
 
