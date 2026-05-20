@@ -22,9 +22,14 @@
     const rawInput = params.get('url') || params.get('intent') || params.get('target') || params.get('q') || '';
     const fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
     const MAX_DECODE_ITERATIONS = 3;
+    const INTENT_SCHEME_PATTERN = /^intent:\/\//i;
+    const INTENT_PREFIX_PATTERN = /^intent:/i;
 
     const decodeSafely = (value) => {
-      try { return decodeURIComponent(value); } catch { return value; /* Keep original text when malformed encoding appears. */ }
+      try { return decodeURIComponent(value); } catch {
+        console.warn('Redirect parameter contains malformed encoding, fallback to raw value.');
+        return value;
+      }
     };
 
     const normalizeInput = (value) => {
@@ -41,12 +46,12 @@
       if (!value) return null;
       let link = normalizeInput(value);
 
-      if (/^intent:\/\//i.test(link)) {
+      if (INTENT_SCHEME_PATTERN.test(link)) {
         const marker = /#intent;/i.exec(link);
         const markerIndex = marker ? marker.index : -1;
         const prefix = markerIndex >= 0 ? link.slice(0, markerIndex) : link;
         const intentPart = markerIndex >= 0 ? link.slice(markerIndex + marker[0].length) : '';
-        const path = prefix.replace(/^intent:\/\//i, '');
+        const path = prefix.replace(INTENT_SCHEME_PATTERN, '');
         let scheme = 'https';
         const cleaned = intentPart.replace(/;end$/i, '');
         for (const segment of cleaned.split(';')) {
@@ -55,10 +60,13 @@
             break;
           }
         }
-        if (!/^https$/i.test(scheme)) scheme = 'https';
+        if (!/^https$/i.test(scheme)) {
+          console.warn(`Unsupported scheme "${scheme}" in intent link, force to https.`);
+          scheme = 'https';
+        }
         link = `${scheme.toLowerCase()}://${path}`;
-      } else if (/^intent:/i.test(link)) {
-        link = link.replace(/^intent:/i, 'https:');
+      } else if (INTENT_PREFIX_PATTERN.test(link)) {
+        link = link.replace(INTENT_PREFIX_PATTERN, 'https:');
       }
 
       try {
