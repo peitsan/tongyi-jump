@@ -41,19 +41,20 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
     const dest = <?php echo json_encode($dest, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const intent = <?php echo json_encode($intent, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     const fallback = <?php echo json_encode($fallback, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-    const FALLBACK_TIMEOUT_MS = 2000;
+    if (!isWechat) {
+      const FALLBACK_TIMEOUT_MS = 2000;
+      const fallbackTimer = setTimeout(() => {
+        window.location.href = fallback;
+      }, FALLBACK_TIMEOUT_MS);
 
-    const fallbackTimer = setTimeout(() => {
-      window.location.href = fallback;
-    }, FALLBACK_TIMEOUT_MS);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          clearTimeout(fallbackTimer);
+        }
+      });
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        clearTimeout(fallbackTimer);
-      }
-    });
-
-    window.location.href = isWechat ? intent : dest;
+      window.location.href = dest;
+    }
   </script>
 </body>
 </html>
