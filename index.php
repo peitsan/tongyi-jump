@@ -3,6 +3,7 @@ $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
 $q = $_GET['q'] ?? '';
+$q = mb_substr($q, 0, 500, 'UTF-8');
 $encoded = rawurlencode($q);
 
 $dest = 'tongyi://page/chat?tab=mainChat&inputText=' . $encoded;
@@ -34,9 +35,9 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
   </div>
   <script>
     const isWechat = <?php echo $isWechat ? 'true' : 'false'; ?>;
-    const dest = '<?php echo htmlspecialchars($dest, ENT_QUOTES, 'UTF-8'); ?>';
-    const intent = '<?php echo htmlspecialchars($intent, ENT_QUOTES, 'UTF-8'); ?>';
-    const fallback = '<?php echo htmlspecialchars($fallback, ENT_QUOTES, 'UTF-8'); ?>';
+    const dest = <?php echo json_encode($dest, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const intent = <?php echo json_encode($intent, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    const fallback = <?php echo json_encode($fallback, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
     const fallbackTimer = setTimeout(() => {
       window.location.href = fallback;
