@@ -3,8 +3,7 @@ $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
 $q = $_GET['q'] ?? '';
-$decoded = rawurldecode($q);
-$encoded = rawurlencode($decoded);
+$encoded = rawurlencode($q);
 
 $dest = 'tongyi://page/chat?tab=mainChat&inputText=' . $encoded;
 $intent = 'intent://page/chat?tab=mainChat&inputText=' . $encoded . '#Intent;scheme=tongyi;end';
@@ -39,10 +38,17 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
     const intent = '<?php echo htmlspecialchars($intent, ENT_QUOTES, 'UTF-8'); ?>';
     const fallback = '<?php echo htmlspecialchars($fallback, ENT_QUOTES, 'UTF-8'); ?>';
 
-    window.location.href = isWechat ? intent : dest;
-    setTimeout(() => {
+    const fallbackTimer = setTimeout(() => {
       window.location.href = fallback;
     }, 2000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearTimeout(fallbackTimer);
+      }
+    });
+
+    window.location.href = isWechat ? intent : dest;
   </script>
 </body>
 </html>
