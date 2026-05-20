@@ -15,7 +15,7 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>正在打开千问...</title>
+  <title>正在打开通义千问...</title>
   <style>
     body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
     .box { text-align: center; padding: 32px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: min(90vw, 420px); }
@@ -28,7 +28,7 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
 <body>
   <div class="box">
     <div class="loader"></div>
-    <p class="hint"><?php echo $isWechat ? '检测到微信环境，正在尝试拉起系统浏览器...' : '正在打开千问...'; ?></p>
+    <p class="hint"><?php echo $isWechat ? '检测到微信环境，正在尝试拉起系统浏览器...' : '正在打开通义千问...'; ?></p>
     <?php if ($isWechat): ?>
       <a class="btn" href="<?php echo htmlspecialchars($intent, ENT_QUOTES, 'UTF-8'); ?>">在系统浏览器中打开</a>
     <?php endif; ?>
