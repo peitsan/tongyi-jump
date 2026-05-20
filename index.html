@@ -52,7 +52,7 @@
     const SITE_URL = 'https://peitsan.github.io/tongyi-jump/';
     const CACHE_KEY = 'tongyi-jump:lastPrompt';
     const INTENT_PREFIX = 'intent://page/chat?tab=mainChat&inputText=';
-    const MAX_INTENT_URL_LENGTH = 2000;
+    const MAX_INTENT_PROMPT_LENGTH = 180;
     const rawInput = params.get('q') || params.get('url') || params.get('intent') || params.get('target') || '';
     const statusText = document.getElementById('status-text');
     const actions = document.getElementById('actions');
@@ -101,15 +101,9 @@
     };
 
     const buildIntentUrl = (value) => {
-      const prompt = normalizeInput(value);
+      const prompt = normalizeInput(value).slice(0, MAX_INTENT_PROMPT_LENGTH);
       if (!prompt) return '';
-      let current = prompt;
-      let intentUrl = `${INTENT_PREFIX}${encodeURIComponent(current)}#Intent;scheme=tongyi;end`;
-      while (intentUrl.length > MAX_INTENT_URL_LENGTH && current) {
-        current = current.slice(0, -1);
-        intentUrl = `${INTENT_PREFIX}${encodeURIComponent(current)}#Intent;scheme=tongyi;end`;
-      }
-      return intentUrl.length <= MAX_INTENT_URL_LENGTH ? intentUrl : '';
+      return `${INTENT_PREFIX}${encodeURIComponent(prompt)}#Intent;scheme=tongyi;end`;
     };
 
     const promptFromQuery = normalizeInput(rawInput);

@@ -1,6 +1,6 @@
 <?php
 const MAX_QUERY_LENGTH = 500;
-const MAX_INTENT_URL_LENGTH = 2000;
+const MAX_INTENT_PROMPT_LENGTH = 180;
 const INTENT_PREFIX = 'intent://page/chat?tab=mainChat&inputText=';
 
 function sanitize_prompt(string $value): string
@@ -25,22 +25,12 @@ function get_request_prompt(): string
 
 function build_intent_url(string $prompt): string
 {
-    $prompt = sanitize_prompt($prompt);
+    $prompt = mb_substr(sanitize_prompt($prompt), 0, MAX_INTENT_PROMPT_LENGTH, 'UTF-8');
     if ($prompt === '') {
         return '';
     }
 
-    do {
-        $encoded = rawurlencode($prompt);
-        $intent = INTENT_PREFIX . $encoded . '#Intent;scheme=tongyi;end';
-        if (strlen($intent) <= MAX_INTENT_URL_LENGTH) {
-            return $intent;
-        }
-
-        $prompt = mb_substr($prompt, 0, max(mb_strlen($prompt, 'UTF-8') - 1, 0), 'UTF-8');
-    } while ($prompt !== '');
-
-    return '';
+    return INTENT_PREFIX . rawurlencode($prompt) . '#Intent;scheme=tongyi;end';
 }
 
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
