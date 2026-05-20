@@ -1,9 +1,11 @@
 <?php
+const MAX_QUERY_LENGTH = 500;
+
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
 $q = $_GET['q'] ?? '';
-$q = mb_substr($q, 0, 500, 'UTF-8');
+$q = mb_substr($q, 0, MAX_QUERY_LENGTH, 'UTF-8');
 $encoded = rawurlencode($q);
 
 $dest = 'tongyi://page/chat?tab=mainChat&inputText=' . $encoded;
