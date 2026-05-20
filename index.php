@@ -7,9 +7,10 @@ $isWechat = strpos($ua, 'MicroMessenger') !== false;
 $q = $_GET['q'] ?? '';
 $q = mb_substr($q, 0, MAX_QUERY_LENGTH, 'UTF-8');
 $encoded = rawurlencode($q);
+$deepLinkPath = 'page/chat?tab=mainChat&inputText=' . $encoded;
 
-$dest = 'tongyi://page/chat?tab=mainChat&inputText=' . $encoded;
-$intent = 'intent://page/chat?tab=mainChat&inputText=' . $encoded . '#Intent;scheme=tongyi;end';
+$dest = 'tongyi://' . $deepLinkPath;
+$intent = 'intent://' . $deepLinkPath . '#Intent;scheme=tongyi;end';
 $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
 ?>
 <!DOCTYPE html>
