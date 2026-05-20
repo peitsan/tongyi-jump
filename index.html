@@ -24,7 +24,7 @@
     const MAX_DECODE_ITERATIONS = 3;
 
     const decodeSafely = (value) => {
-      try { return decodeURIComponent(value); } catch { return value; }
+      try { return decodeURIComponent(value); } catch { return value; /* Keep original text when malformed encoding appears. */ }
     };
 
     const normalizeInput = (value) => {
@@ -42,7 +42,10 @@
       let link = normalizeInput(value);
 
       if (/^intent:\/\//i.test(link)) {
-        const [prefix, intentPart = ''] = link.split('#Intent;');
+        const marker = /#intent;/i.exec(link);
+        const markerIndex = marker ? marker.index : -1;
+        const prefix = markerIndex >= 0 ? link.slice(0, markerIndex) : link;
+        const intentPart = markerIndex >= 0 ? link.slice(markerIndex + marker[0].length) : '';
         const path = prefix.replace(/^intent:\/\//i, '');
         let scheme = 'https';
         const cleaned = intentPart.replace(/;end$/i, '');
@@ -52,7 +55,7 @@
             break;
           }
         }
-        if (!/^https?$/i.test(scheme)) scheme = 'https';
+        if (!/^https$/i.test(scheme)) scheme = 'https';
         link = `${scheme.toLowerCase()}://${path}`;
       } else if (/^intent:/i.test(link)) {
         link = link.replace(/^intent:/i, 'https:');
