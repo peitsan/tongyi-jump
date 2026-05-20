@@ -52,7 +52,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
   <div class="center">
     <div class="box" id="loading-box">
       <div class="loader"></div>
-      <p id="status-text"><?php echo $q !== '' ? '正在打开千问...' : '未识别到可直接跳转的买票内容，请检查链接参数。'; ?></p>
+      <p id="status-text"><?php echo $q !== '' ? '正在打开千问...' : '未识别到可直接跳转的输入内容，请检查链接参数。'; ?></p>
       <div class="actions" id="actions">
         <a class="link-btn" id="fallback-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="在新标签页打开还原后的链接">打开还原后的链接</a>
       </div>
