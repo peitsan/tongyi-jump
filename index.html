@@ -63,7 +63,7 @@
         if (url.protocol === 'http:') url.protocol = 'https:';
         if (url.protocol !== 'https:') return null;
         const host = url.hostname.toLowerCase();
-        if (host.split('.').slice(-2).join('.') === 'tongyi.com') return url.toString();
+        if (host === 'tongyi.com' || host.endsWith('.tongyi.com')) return url.toString();
       } catch {}
       return null;
     };
