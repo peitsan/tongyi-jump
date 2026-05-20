@@ -40,7 +40,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
     <div class="mask-panel">
       <div class="mask-badge">微信内打开提示</div>
       <h1>请从外部浏览器打开</h1>
-      <p>请点击右上角“···”，选择“在浏览器中打开”，之后会自动跳转并填充买票 prompt。</p>
+      <p>请点击右上角“···”，选择“在浏览器中打开”，之后会自动跳转并填充输入内容。</p>
       <ol>
         <li>点击右上角“···”</li>
         <li>选择“在浏览器中打开”</li>
@@ -77,18 +77,18 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
       openLink.textContent = intentUrl ? '在系统浏览器中打开' : '返回主页';
       statusText.textContent = intentUrl
         ? '检测到微信环境，请通过右上角“···”打开系统浏览器。'
-        : '未识别到可填充的买票内容，请先返回上一页重新打开。';
+        : '未识别到可填充的输入内容，请先返回上一页重新打开。';
       actions.style.display = 'block';
     } else if (intentUrl) {
       window.location.replace(intentUrl);
     } else {
-      fallbackLink.href = fallback;
-      fallbackLink.title = fallback;
+      statusText.textContent = '未识别到可直接跳转的输入内容，请检查链接参数。';
       actions.style.display = 'block';
     }
 
-    fallbackLink.href = intentUrl || fallback;
-    fallbackLink.title = intentUrl || fallback;
+    const linkTarget = intentUrl || fallback;
+    fallbackLink.href = linkTarget;
+    fallbackLink.title = linkTarget;
   </script>
 </body>
 </html>
