@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>正在打开千问...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
+    .box { text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .loader { width: 40px; height: 40px; border: 3px solid #eee; border-top: 3px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    p { color: #666; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="loader"></div>
+    <p>正在打开千问...</p>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    const encoded = encodeURIComponent(decodeURIComponent(q));
+    const dest = 'tongyi://page/chat?tab=mainChat&inputText=' + encoded;
+    const fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
+
+    // Android: try open app first
+    window.location.href = dest;
+
+    // Fallback after 2s
+    setTimeout(() => {
+      window.location.href = fallback;
+    }, 2000);
+
+    // Fallback if page hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) window.location.href = fallback;
+    });
+  </script>
+</body>
+</html>
