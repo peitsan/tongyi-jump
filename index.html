@@ -10,17 +10,25 @@
     .loader { width: 40px; height: 40px; border: 3px solid #eee; border-top: 3px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     p { color: #666; margin: 0; }
+    .actions { margin-top: 16px; display: none; }
+    .link-btn { display: inline-block; padding: 10px 14px; border-radius: 10px; background: #1677ff; color: #fff; text-decoration: none; word-break: break-all; }
   </style>
 </head>
 <body>
   <div class="box">
     <div class="loader"></div>
-    <p>正在打开千问...</p>
+    <p id="status-text">正在打开千问...</p>
+    <div class="actions" id="actions">
+      <a class="link-btn" id="fallback-link" href="#" rel="noopener noreferrer">打开还原后的链接</a>
+    </div>
   </div>
   <script>
     const params = new URLSearchParams(location.search);
     const rawInput = params.get('url') || params.get('intent') || params.get('target') || params.get('q') || '';
-    const fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
+    const SITE_URL = 'https://peitsan.github.io/tongyi-jump/';
+    const statusText = document.getElementById('status-text');
+    const actions = document.getElementById('actions');
+    const fallbackLink = document.getElementById('fallback-link');
     const MAX_DECODE_ITERATIONS = 3;
     const INTENT_SCHEME_PATTERN = /^intent:\/\//i;
     const INTENT_PREFIX_PATTERN = /^intent:/i;
@@ -41,6 +49,20 @@
         current = next.trim();
       }
       return current;
+    };
+
+    const parseFallbackUrl = (value) => {
+      const normalized = normalizeInput(value);
+      if (normalized) {
+        try {
+          const url = new URL(normalized);
+          if (url.protocol === 'https:' || url.protocol === 'http:') return url.toString();
+        } catch (error) {
+          console.warn('Fallback input is not a standard URL, trying as q parameter.', error);
+        }
+        return `${SITE_URL}?q=${encodeURIComponent(normalized)}`;
+      }
+      return `${SITE_URL}${location.search || ''}`;
     };
 
     const parseIntentToHttps = (value) => {
@@ -82,8 +104,16 @@
       return null;
     };
 
+    const fallback = parseFallbackUrl(rawInput);
+    fallbackLink.href = fallback;
+    fallbackLink.textContent = fallback;
     const target = parseIntentToHttps(rawInput);
-    window.location.replace(target || fallback);
+    if (target) {
+      window.location.replace(target);
+    } else {
+      statusText.textContent = '未识别到可直接跳转的千问链接，请在浏览器中打开或使用下面还原后的链接。';
+      actions.style.display = 'block';
+    }
   </script>
 </body>
 </html>
