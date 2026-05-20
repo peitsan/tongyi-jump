@@ -21,6 +21,7 @@
     const params = new URLSearchParams(location.search);
     const rawInput = params.get('url') || params.get('intent') || params.get('target') || params.get('q') || '';
     const fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
+    const MAX_DECODE_ITERATIONS = 3;
 
     const decodeSafely = (value) => {
       try { return decodeURIComponent(value); } catch { return value; }
@@ -28,7 +29,7 @@
 
     const normalizeInput = (value) => {
       let current = (value || '').trim();
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < MAX_DECODE_ITERATIONS; i++) {
         const next = decodeSafely(current);
         if (next === current) break;
         current = next.trim();
@@ -62,7 +63,7 @@
         if (url.protocol === 'http:') url.protocol = 'https:';
         if (url.protocol !== 'https:') return null;
         const host = url.hostname.toLowerCase();
-        if (host === 'tongyi.com' || host.endsWith('.tongyi.com')) return url.toString();
+        if (host.split('.').slice(-2).join('.') === 'tongyi.com') return url.toString();
       } catch {}
       return null;
     };
