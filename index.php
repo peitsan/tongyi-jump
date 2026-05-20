@@ -31,7 +31,7 @@ $fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
 <body>
   <div class="box">
     <div class="loader"></div>
-    <p class="hint"><?php echo $isWechat ? '检测到微信环境，正在尝试拉起系统浏览器...' : '正在打开通义千问...'; ?></p>
+    <p class="hint"><?php echo $isWechat ? '检测到微信环境，请点击下方按钮打开系统浏览器...' : '正在打开通义千问...'; ?></p>
     <?php if ($isWechat): ?>
       <a class="btn" href="<?php echo htmlspecialchars($intent, ENT_QUOTES, 'UTF-8'); ?>">在系统浏览器中打开</a>
     <?php endif; ?>
