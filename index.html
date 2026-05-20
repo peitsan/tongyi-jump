@@ -100,10 +100,10 @@
       }
     };
 
-    const buildIntentUrl = (value) => {
-      const prompt = normalizeInput(value).slice(0, MAX_INTENT_PROMPT_LENGTH);
-      if (!prompt) return '';
-      return `${INTENT_PREFIX}${encodeURIComponent(prompt)}#Intent;scheme=tongyi;end`;
+    const buildIntentUrl = (prompt) => {
+      const promptText = prompt.slice(0, MAX_INTENT_PROMPT_LENGTH);
+      if (!promptText) return '';
+      return `${INTENT_PREFIX}${encodeURIComponent(promptText)}#Intent;scheme=tongyi;end`;
     };
 
     const promptFromQuery = normalizeInput(rawInput);

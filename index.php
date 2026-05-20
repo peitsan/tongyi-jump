@@ -25,7 +25,7 @@ function get_request_prompt(): string
 
 function build_intent_url(string $prompt): string
 {
-    $prompt = mb_substr(sanitize_prompt($prompt), 0, MAX_INTENT_PROMPT_LENGTH, 'UTF-8');
+    $prompt = mb_substr($prompt, 0, MAX_INTENT_PROMPT_LENGTH, 'UTF-8');
     if ($prompt === '') {
         return '';
     }
