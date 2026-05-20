@@ -19,23 +19,56 @@
   </div>
   <script>
     const params = new URLSearchParams(location.search);
-    const q = params.get('q') || '';
-    const encoded = encodeURIComponent(decodeURIComponent(q));
-    const dest = 'tongyi://page/chat?tab=mainChat&inputText=' + encoded;
+    const rawInput = params.get('url') || params.get('intent') || params.get('target') || params.get('q') || '';
     const fallback = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
 
-    // Android: try open app first
-    window.location.href = dest;
+    const decodeSafely = (value) => {
+      try { return decodeURIComponent(value); } catch { return value; }
+    };
 
-    // Fallback after 2s
-    setTimeout(() => {
-      window.location.href = fallback;
-    }, 2000);
+    const normalizeInput = (value) => {
+      let current = (value || '').trim();
+      for (let i = 0; i < 3; i++) {
+        const next = decodeSafely(current);
+        if (next === current) break;
+        current = next.trim();
+      }
+      return current;
+    };
 
-    // Fallback if page hidden
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) window.location.href = fallback;
-    });
+    const parseIntentToHttps = (value) => {
+      if (!value) return null;
+      let link = normalizeInput(value);
+
+      if (/^intent:\/\//i.test(link)) {
+        const [prefix, intentPart = ''] = link.split('#Intent;');
+        const path = prefix.replace(/^intent:\/\//i, '');
+        let scheme = 'https';
+        const cleaned = intentPart.replace(/;end$/i, '');
+        for (const segment of cleaned.split(';')) {
+          if (segment.startsWith('scheme=')) {
+            scheme = segment.slice('scheme='.length);
+            break;
+          }
+        }
+        if (!/^https?$/i.test(scheme)) scheme = 'https';
+        link = `${scheme.toLowerCase()}://${path}`;
+      } else if (/^intent:/i.test(link)) {
+        link = link.replace(/^intent:/i, 'https:');
+      }
+
+      try {
+        const url = new URL(link);
+        if (url.protocol === 'http:') url.protocol = 'https:';
+        if (url.protocol !== 'https:') return null;
+        const host = url.hostname.toLowerCase();
+        if (host === 'tongyi.com' || host.endsWith('.tongyi.com')) return url.toString();
+      } catch {}
+      return null;
+    };
+
+    const target = parseIntentToHttps(rawInput);
+    window.location.replace(target || fallback);
   </script>
 </body>
 </html>
