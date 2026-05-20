@@ -1,5 +1,7 @@
 <?php
 const MAX_QUERY_LENGTH = 500;
+const MAX_INTENT_URL_LENGTH = 2000;
+const INTENT_PREFIX = 'intent://page/chat?tab=mainChat&inputText=';
 
 function sanitize_prompt(string $value): string
 {
@@ -8,13 +10,45 @@ function sanitize_prompt(string $value): string
     return mb_substr($value, 0, MAX_QUERY_LENGTH, 'UTF-8');
 }
 
+function get_request_prompt(): string
+{
+    foreach (['q', 'url', 'intent', 'target'] as $key) {
+        if (!array_key_exists($key, $_GET) || is_array($_GET[$key])) {
+            continue;
+        }
+
+        return sanitize_prompt((string) $_GET[$key]);
+    }
+
+    return '';
+}
+
+function build_intent_url(string $prompt): string
+{
+    $prompt = sanitize_prompt($prompt);
+    if ($prompt === '') {
+        return '';
+    }
+
+    do {
+        $encoded = rawurlencode($prompt);
+        $intent = INTENT_PREFIX . $encoded . '#Intent;scheme=tongyi;end';
+        if (strlen($intent) <= MAX_INTENT_URL_LENGTH) {
+            return $intent;
+        }
+
+        $prompt = mb_substr($prompt, 0, max(mb_strlen($prompt, 'UTF-8') - 1, 0), 'UTF-8');
+    } while ($prompt !== '');
+
+    return '';
+}
+
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
-$q = $_GET['q'] ?? $_GET['url'] ?? $_GET['intent'] ?? $_GET['target'] ?? '';
-$q = sanitize_prompt((string) $q);
+$q = get_request_prompt();
 $encoded = rawurlencode($q);
-$intent = $q === '' ? '' : 'intent://page/chat?tab=mainChat&inputText=' . $encoded . '#Intent;scheme=tongyi;end';
+$intent = build_intent_url($q);
 $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peitsan.github.io/tongyi-jump/?q=' . $encoded;
 ?>
 <!DOCTYPE html>
@@ -53,6 +87,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
         <li>选择“在浏览器中打开”</li>
         <li>返回后将自动唤起千问 App</li>
       </ol>
+      <p>本页会在当前浏览器缓存输入内容，方便重复打开。</p>
       <a class="link-btn" id="open-link" href="#" target="_blank" rel="noopener noreferrer">在系统浏览器中打开</a>
     </div>
   </div>

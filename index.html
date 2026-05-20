@@ -34,6 +34,7 @@
         <li>选择“在浏览器中打开”</li>
         <li>返回后将自动唤起千问 App</li>
       </ol>
+      <p>本页会在当前浏览器缓存输入内容，方便重复打开。</p>
       <a class="link-btn" id="open-link" href="#" target="_blank" rel="noopener noreferrer">在系统浏览器中打开</a>
     </div>
   </div>
@@ -50,6 +51,8 @@
     const params = new URLSearchParams(location.search);
     const SITE_URL = 'https://peitsan.github.io/tongyi-jump/';
     const CACHE_KEY = 'tongyi-jump:lastPrompt';
+    const INTENT_PREFIX = 'intent://page/chat?tab=mainChat&inputText=';
+    const MAX_INTENT_URL_LENGTH = 2000;
     const rawInput = params.get('q') || params.get('url') || params.get('intent') || params.get('target') || '';
     const statusText = document.getElementById('status-text');
     const actions = document.getElementById('actions');
@@ -100,7 +103,13 @@
     const buildIntentUrl = (value) => {
       const prompt = normalizeInput(value);
       if (!prompt) return '';
-      return `intent://page/chat?tab=mainChat&inputText=${encodeURIComponent(prompt)}#Intent;scheme=tongyi;end`;
+      let current = prompt;
+      let intentUrl = `${INTENT_PREFIX}${encodeURIComponent(current)}#Intent;scheme=tongyi;end`;
+      while (intentUrl.length > MAX_INTENT_URL_LENGTH && current) {
+        current = current.slice(0, -1);
+        intentUrl = `${INTENT_PREFIX}${encodeURIComponent(current)}#Intent;scheme=tongyi;end`;
+      }
+      return intentUrl.length <= MAX_INTENT_URL_LENGTH ? intentUrl : '';
     };
 
     const promptFromQuery = normalizeInput(rawInput);
