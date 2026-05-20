@@ -1,120 +1,295 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>正在打开千问...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
-    .box { text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .loader { width: 40px; height: 40px; border: 3px solid #eee; border-top: 3px solid #1677ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f5f7fb;
+      color: #1f2329;
+    }
+    .box {
+      width: min(92vw, 460px);
+      text-align: center;
+      padding: 36px 28px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, .10);
+    }
+    .loader {
+      width: 42px;
+      height: 42px;
+      border: 3px solid #e5e7eb;
+      border-top: 3px solid #1677ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 18px;
+    }
+    h1 { font-size: 20px; margin: 0 0 10px; }
+    p { color: #5f6673; line-height: 1.7; margin: 8px 0; }
+    .actions { display: grid; gap: 10px; margin-top: 20px; }
+    .btn, .secondary-btn {
+      display: block;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: 0;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn { background: #1677ff; color: #fff; }
+    .secondary-btn { background: #eef4ff; color: #165dff; }
+    .debug {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f7f8fa;
+      color: #6b7280;
+      font-size: 12px;
+      word-break: break-all;
+      text-align: left;
+    }
+    .wechat-mask[hidden] { display: none; }
+    .wechat-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, .82);
+      color: #fff;
+      padding: max(28px, env(safe-area-inset-top)) 22px 22px;
+    }
+    .arrow {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: 22px;
+      font-size: 64px;
+      line-height: 1;
+      transform: rotate(-8deg);
+    }
+    .mask-card {
+      margin: 96px auto 0;
+      width: min(92vw, 420px);
+      padding: 24px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .12);
+      backdrop-filter: blur(10px);
+    }
+    .mask-card h2 { margin: 0 0 12px; font-size: 22px; }
+    .mask-card p { color: rgba(255,255,255,.88); }
+    .mask-btn {
+      display: block;
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fff;
+      color: #111827;
+      text-decoration: none;
+      text-align: center;
+      font-weight: 600;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    p { color: #666; margin: 0; }
-    .actions { margin-top: 16px; display: none; }
-    .link-btn { display: inline-block; padding: 10px 14px; border-radius: 10px; background: #1677ff; color: #fff; text-decoration: none; word-break: break-all; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <div class="loader"></div>
-    <p id="status-text">正在打开千问...</p>
-    <div class="actions" id="actions">
-      <a class="link-btn" id="fallback-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="在新标签页打开还原后的链接">打开还原后的链接</a>
-    </div>
-  </div>
-  <script>
-    const params = new URLSearchParams(location.search);
-    const rawInput = params.get('url') || params.get('intent') || params.get('target') || params.get('q') || '';
-    const SITE_URL = 'https://peitsan.github.io/tongyi-jump/';
-    const statusText = document.getElementById('status-text');
-    const actions = document.getElementById('actions');
-    const fallbackLink = document.getElementById('fallback-link');
-    const MAX_DECODE_ITERATIONS = 3;
-    const INTENT_SCHEME_PATTERN = /^intent:\/\//i;
-    const INTENT_PREFIX_PATTERN = /^intent:/i;
-    const HTTPS_SCHEME_PATTERN = /^https$/i;
+  <main class="box">
+    <div class="loader" id="loader"></div>
+    <h1 id="title">正在打开千问...</h1>
+    <p id="status-text">正在解析链接参数。</p>
 
-    const decodeSafely = (value) => {
-      try { return decodeURIComponent(value); } catch {
-        console.warn('Redirect parameter contains malformed encoding, falling back to raw value.');
+    <div class="actions">
+      <a class="btn" id="fallback-link" href="#" rel="noopener noreferrer">
+        打开还原后的链接
+      </a>
+      <button class="secondary-btn" id="copy-link" type="button">
+        复制原始跳转链接
+      </button>
+    </div>
+
+    <div class="debug" id="debug-url" hidden></div>
+  </main>
+
+  <section class="wechat-mask" id="wechat-mask" hidden>
+    <div class="arrow">↗</div>
+    <div class="mask-card">
+      <h2>请在浏览器中打开</h2>
+      <p>微信内置浏览器会拦截千问 App 的 intent 链接。</p>
+      <p>请点击右上角「···」，选择「在浏览器打开」。</p>
+      <p>打开到系统浏览器后，本页会自动尝试唤起千问；若未自动唤起，请点页面里的「打开还原后的链接」。</p>
+      <a class="mask-btn" id="mask-copy-link" href="#">复制当前链接</a>
+    </div>
+  </section>
+
+  <script>
+    const CACHE_KEY = 'tongyi_jump_q';
+    const CACHE_TIME_KEY = 'tongyi_jump_q_time';
+    const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+    const MAX_PROMPT_LENGTH = 500;
+    const FALLBACK_URL = 'https://m.tongyi.com/app/tongyi/tongyi-hybrid/download-guide';
+
+    const params = new URLSearchParams(window.location.search);
+    const ua = navigator.userAgent || '';
+    const isWechat = /MicroMessenger/i.test(ua);
+
+    const title = document.getElementById('title');
+    const statusText = document.getElementById('status-text');
+    const fallbackLink = document.getElementById('fallback-link');
+    const copyLink = document.getElementById('copy-link');
+    const debugUrl = document.getElementById('debug-url');
+    const wechatMask = document.getElementById('wechat-mask');
+    const maskCopyLink = document.getElementById('mask-copy-link');
+
+    function decodeSafely(value) {
+      try {
+        return decodeURIComponent(value);
+      } catch (_) {
         return value;
       }
-    };
+    }
 
-    const normalizeInput = (value) => {
-      let current = (value || '').trim();
-      for (let i = 0; i < MAX_DECODE_ITERATIONS; i++) {
-        const next = decodeSafely(current);
+    function normalizeText(value) {
+      let current = String(value || '').trim();
+
+      for (let i = 0; i < 2; i += 1) {
+        const next = decodeSafely(current).trim();
         if (next === current) break;
-        current = next.trim();
+        current = next;
       }
+
       return current;
-    };
+    }
 
-    const parseFallbackUrl = (value) => {
-      const normalized = normalizeInput(value);
-      if (normalized) {
-        try {
-          const url = new URL(normalized);
-          if (url.protocol === 'https:' || url.protocol === 'http:') return url.toString();
-        } catch (error) {
-          console.warn('fallback input is not a standard URL, trying as q parameter.', error);
-        }
-        const restored = new URL(SITE_URL);
-        restored.searchParams.set('q', normalized);
-        return restored.toString();
+    function extractInputTextFromDeepLink(value) {
+      const text = String(value || '');
+      const match = text.match(/[?&]inputText=([^&#;]*)/i);
+      return match ? normalizeText(match[1]) : '';
+    }
+
+    function getCachedPrompt() {
+      const ts = Number(
+        sessionStorage.getItem(CACHE_TIME_KEY) ||
+        localStorage.getItem(CACHE_TIME_KEY) ||
+        0
+      );
+
+      if (!ts || Date.now() - ts > CACHE_MAX_AGE_MS) {
+        return '';
       }
-      return SITE_URL;
-    };
 
-    const parseIntentToHttps = (value) => {
-      if (!value) return null;
-      let link = normalizeInput(value);
+      return sessionStorage.getItem(CACHE_KEY) || localStorage.getItem(CACHE_KEY) || '';
+    }
 
-      if (INTENT_SCHEME_PATTERN.test(link)) {
-        const marker = /#intent;/i.exec(link);
-        const markerIndex = marker ? marker.index : -1;
-        const prefix = markerIndex >= 0 ? link.slice(0, markerIndex) : link;
-        const intentPart = markerIndex >= 0 ? link.slice(markerIndex + marker[0].length) : '';
-        const path = prefix.replace(INTENT_SCHEME_PATTERN, '');
-        let scheme = 'https';
-        const cleaned = intentPart.replace(/;end$/i, '');
-        for (const segment of cleaned.split(';')) {
-          if (segment.startsWith('scheme=')) {
-            scheme = segment.slice('scheme='.length);
-            break;
-          }
-        }
-        if (!HTTPS_SCHEME_PATTERN.test(scheme)) {
-          console.warn(`Unsupported scheme "${scheme}" in intent link, force to https.`);
-          scheme = 'https';
-        }
-        link = `${scheme.toLowerCase()}://${path}`;
-      } else if (INTENT_PREFIX_PATTERN.test(link)) {
-        link = link.replace(INTENT_PREFIX_PATTERN, 'https:');
-      }
+    function cachePrompt(prompt) {
+      if (!prompt) return;
+
+      const now = String(Date.now());
 
       try {
-        const url = new URL(link);
-        if (url.protocol === 'http:') url.protocol = 'https:';
-        if (url.protocol !== 'https:') return null;
-        const host = url.hostname.toLowerCase();
-        if (host === 'tongyi.com' || host.endsWith('.tongyi.com')) return url.toString();
-      } catch (error) {
-        console.warn('Invalid redirect URL after intent conversion, using fallback.', error);
-      }
-      return null;
-    };
+        sessionStorage.setItem(CACHE_KEY, prompt);
+        sessionStorage.setItem(CACHE_TIME_KEY, now);
+        localStorage.setItem(CACHE_KEY, prompt);
+        localStorage.setItem(CACHE_TIME_KEY, now);
+      } catch (_) {}
+    }
 
-    const fallback = parseFallbackUrl(rawInput);
-    const target = parseIntentToHttps(rawInput);
-    if (target) {
-      window.location.replace(target);
+    function readPrompt() {
+      let prompt = params.get('q') || params.get('inputText') || '';
+
+      if (!prompt) {
+        prompt = extractInputTextFromDeepLink(
+          params.get('intent') ||
+          params.get('target') ||
+          params.get('url') ||
+          ''
+        );
+      }
+
+      prompt = normalizeText(prompt) || getCachedPrompt();
+      prompt = prompt.slice(0, MAX_PROMPT_LENGTH);
+
+      cachePrompt(prompt);
+      return prompt;
+    }
+
+    function buildIntentUrl(prompt) {
+      const encodedPrompt = encodeURIComponent(prompt);
+      const fallback = encodeURIComponent(FALLBACK_URL);
+
+      return `intent://page/chat?tab=mainChat&inputText=${encodedPrompt}#Intent;scheme=tongyi;S.browser_fallback_url=${fallback};end`;
+    }
+
+    function buildShareUrl(prompt) {
+      const url = new URL(window.location.origin + window.location.pathname);
+      url.searchParams.set('q', prompt);
+      return url.toString();
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+
+      const input = document.createElement('textarea');
+      input.value = text;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      input.remove();
+
+      return Promise.resolve();
+    }
+
+    const prompt = readPrompt();
+    const shareUrl = prompt ? buildShareUrl(prompt) : window.location.href;
+    const intentUrl = prompt ? buildIntentUrl(prompt) : '';
+
+    if (!prompt) {
+      title.textContent = '缺少购票参数';
+      statusText.textContent = '链接中没有 q 参数，也没有可用缓存。请重新打开带 q 参数的原始链接。';
+
+      fallbackLink.removeAttribute('href');
+      fallbackLink.style.pointerEvents = 'none';
+      fallbackLink.style.opacity = '.55';
     } else {
-      fallbackLink.href = fallback;
-      fallbackLink.title = fallback;
-      statusText.textContent = '未识别到可直接跳转的千问链接，请在浏览器中打开或使用下面还原后的链接。';
-      actions.style.display = 'block';
+      fallbackLink.href = intentUrl;
+
+      debugUrl.hidden = false;
+      debugUrl.textContent = intentUrl;
+
+      copyLink.addEventListener('click', () => {
+        copyText(intentUrl).then(() => {
+          copyLink.textContent = '已复制';
+        });
+      });
+
+      maskCopyLink.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        copyText(shareUrl).then(() => {
+          maskCopyLink.textContent = '已复制，去右上角选择浏览器打开';
+        });
+      });
+
+      if (isWechat) {
+        title.textContent = '微信内需要外部浏览器';
+        statusText.textContent = '已缓存参数。请按遮罩提示从右上角选择「在浏览器打开」。';
+        wechatMask.hidden = false;
+      } else {
+        title.textContent = '正在唤起千问 App...';
+        statusText.textContent = '已还原为千问 intent 链接。若未自动跳转，请点击下方按钮。';
+
+        window.location.href = intentUrl;
+      }
     }
   </script>
 </body>
