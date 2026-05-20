@@ -36,7 +36,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
   </style>
 </head>
 <body>
-  <div class="mask" id="wechat-mask" aria-hidden="true">
+  <div class="mask" id="wechat-mask">
     <div class="mask-panel">
       <div class="mask-badge">微信内打开提示</div>
       <h1>请从外部浏览器打开</h1>
@@ -71,7 +71,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
 
     if (isWechat) {
       wechatMask.style.display = 'flex';
-      loadingBox.style.filter = 'blur(0.5px)';
+      loadingBox.style.filter = 'blur(2px)';
       loadingBox.setAttribute('aria-hidden', 'true');
       openLink.href = intentUrl || fallback;
       openLink.textContent = intentUrl ? '在系统浏览器中打开' : '返回主页';
