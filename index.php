@@ -1,11 +1,18 @@
 <?php
 const MAX_QUERY_LENGTH = 500;
 
+function sanitize_prompt(string $value): string
+{
+    $value = preg_replace('/[\x00-\x1F\x7F]/u', '', $value) ?? '';
+    $value = trim($value);
+    return mb_substr($value, 0, MAX_QUERY_LENGTH, 'UTF-8');
+}
+
 $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $isWechat = strpos($ua, 'MicroMessenger') !== false;
 
 $q = $_GET['q'] ?? $_GET['url'] ?? $_GET['intent'] ?? $_GET['target'] ?? '';
-$q = mb_substr(trim((string) $q), 0, MAX_QUERY_LENGTH, 'UTF-8');
+$q = sanitize_prompt((string) $q);
 $encoded = rawurlencode($q);
 $intent = $q === '' ? '' : 'intent://page/chat?tab=mainChat&inputText=' . $encoded . '#Intent;scheme=tongyi;end';
 $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peitsan.github.io/tongyi-jump/?q=' . $encoded;
@@ -40,9 +47,9 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
     <div class="mask-panel">
       <div class="mask-badge">微信内打开提示</div>
       <h1>请从外部浏览器打开</h1>
-      <p>请点击右上角“···”，选择“在浏览器中打开”，之后会自动跳转并填充输入内容。</p>
+      <p>请点击右上角“...”，选择“在浏览器中打开”，之后会自动跳转并填充输入内容。</p>
       <ol>
-        <li>点击右上角“···”</li>
+        <li>点击右上角“...”</li>
         <li>选择“在浏览器中打开”</li>
         <li>返回后将自动唤起千问 App</li>
       </ol>
@@ -76,7 +83,7 @@ $fallback = $q === '' ? 'https://peitsan.github.io/tongyi-jump/' : 'https://peit
       openLink.href = intentUrl || fallback;
       openLink.textContent = intentUrl ? '在系统浏览器中打开' : '返回主页';
       statusText.textContent = intentUrl
-        ? '检测到微信环境，请通过右上角“···”打开系统浏览器。'
+        ? '检测到微信环境，请通过右上角“...”打开系统浏览器。'
         : '未识别到可填充的输入内容，请先返回上一页重新打开。';
       actions.style.display = 'block';
     } else if (intentUrl) {
