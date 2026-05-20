@@ -60,9 +60,11 @@
         } catch (error) {
           console.warn('Fallback input is not a standard URL, trying as q parameter.', error);
         }
-        return `${SITE_URL}?q=${encodeURIComponent(normalized)}`;
+        const restored = new URL(SITE_URL);
+        restored.searchParams.set('q', normalized);
+        return restored.toString();
       }
-      return `${SITE_URL}${location.search || ''}`;
+      return SITE_URL;
     };
 
     const parseIntentToHttps = (value) => {
@@ -106,7 +108,7 @@
 
     const fallback = parseFallbackUrl(rawInput);
     fallbackLink.href = fallback;
-    fallbackLink.textContent = fallback;
+    fallbackLink.title = fallback;
     const target = parseIntentToHttps(rawInput);
     if (target) {
       window.location.replace(target);
